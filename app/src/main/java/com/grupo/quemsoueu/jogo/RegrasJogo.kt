@@ -7,6 +7,8 @@ import com.grupo.quemsoueu.ui.modelos.Dificuldade
 const val VIDAS_MAXIMAS = 3
 const val PONTOS_INICIAIS = 100
 const val CUSTO_DICA = 15
+const val CUSTO_PERGUNTA = 5
+const val LIMITE_PERGUNTAS_IA = 10
 const val TEMPO_LIMITE_SEGUNDOS = 120
 const val SEGUNDOS_POR_PONTO_BONUS = 3
 

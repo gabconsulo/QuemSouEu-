@@ -61,6 +61,7 @@ data class PartidaUi(
     val dicasUsadas: Int,
     val perguntasIa: Int,
     val tempoSegundos: Int,
+    val criadaEm: Long = 0L,
 )
 
 /** Tudo o que a tela de jogo mostra. O GameViewModel monta este objeto na Fase 2. */

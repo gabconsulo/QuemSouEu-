@@ -83,6 +83,7 @@ fun TelaCadastroCarta(
     dicasGeradas: List<String>? = null,
     erroIa: String? = null,
     salvando: Boolean = false,
+    erro: String? = null,
 ) {
     var nome by remember(cartaInicial) { mutableStateOf(cartaInicial?.nome ?: "") }
     var categoria by remember(cartaInicial) { mutableStateOf(cartaInicial?.categoria ?: Categoria.ANIMAIS) }
@@ -136,6 +137,9 @@ fun TelaCadastroCarta(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            if (erro != null) {
+                AvisoCartoon(texto = erro, tipo = TipoAviso.ERRO)
+            }
             CartaCartoon(modifier = Modifier.fillMaxWidth(), espacamento = 12) {
                 CampoCartoon(
                     valor = nome,

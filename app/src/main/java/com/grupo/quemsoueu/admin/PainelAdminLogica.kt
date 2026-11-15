@@ -1,7 +1,7 @@
-package com.exemplo.quemsoueu.admin
+package com.grupo.quemsoueu.admin
 
-import com.exemplo.quemsoueu.model.Carta
-import com.exemplo.quemsoueu.model.Categoria
+import com.grupo.quemsoueu.model.Carta
+import com.grupo.quemsoueu.model.Categoria
 
 /**
  * Lógica pura do Painel Admin: não usa Android nem banco, só listas.

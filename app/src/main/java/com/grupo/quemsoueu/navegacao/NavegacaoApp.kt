@@ -7,8 +7,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -20,6 +22,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.grupo.quemsoueu.login.Perfil
 import com.grupo.quemsoueu.repository.FirestoreCartaRepository
+import com.grupo.quemsoueu.data.local.RankingDatabase
+import com.grupo.quemsoueu.repository.RoomPartidaRepository
 import com.grupo.quemsoueu.ui.componentes.BarraJogador
 import com.grupo.quemsoueu.ui.componentes.EstadoCarregando
 import com.grupo.quemsoueu.ui.componentes.EstadoErro
@@ -28,7 +32,7 @@ import com.grupo.quemsoueu.ui.modelos.PartidaUi
 import com.grupo.quemsoueu.ui.telas.CadastroCartaRota
 import com.grupo.quemsoueu.ui.telas.DialogoFimDePartida
 import com.grupo.quemsoueu.ui.telas.PainelAdminRota
-import com.grupo.quemsoueu.ui.telas.RankingRota
+import com.grupo.quemsoueu.ui.telas.TelaRanking
 import com.grupo.quemsoueu.ui.telas.TelaAjustes
 import com.grupo.quemsoueu.ui.telas.TelaInicio
 import com.grupo.quemsoueu.ui.telas.TelaJogo
@@ -37,6 +41,10 @@ import com.grupo.quemsoueu.viewmodel.JogoUiState
 import com.grupo.quemsoueu.viewmodel.JogoViewModel
 import com.grupo.quemsoueu.viewmodel.JogoViewModelFactory
 import com.grupo.quemsoueu.viewmodel.LoginViewModel
+import com.grupo.quemsoueu.viewmodel.PainelAdminViewModel
+import com.grupo.quemsoueu.viewmodel.PainelAdminViewModelFactory
+import com.grupo.quemsoueu.viewmodel.RankingViewModel
+import com.grupo.quemsoueu.viewmodel.RankingViewModelFactory
 
 fun irParaAba(navController: NavController, rota: String) {
     navController.navigate(rota) {
@@ -82,7 +90,7 @@ fun RotaJogo(
     TelaJogo(
         estado = estadoTela,
         onVirarDica = { jogoViewModel.onVirarDica() },
-        onPerguntar = { },
+        onPerguntar = { pergunta -> jogoViewModel.onPerguntar(pergunta) },
         onChutar = { palpite -> jogoViewModel.onChutar(palpite) }
     )
 
@@ -111,9 +119,16 @@ fun NavegacaoApp(
     aoSalvarPartida: (PartidaUi) -> Unit = { }
 ) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val rankingViewModel: RankingViewModel = viewModel(
+        factory = RankingViewModelFactory(
+            RoomPartidaRepository(RankingDatabase.obter(context).partidaDao())
+        )
+    )
 
     val login by loginViewModel.uiState.collectAsStateWithLifecycle()
     val jogo by jogoViewModel.uiState.collectAsStateWithLifecycle()
+    val ranking by rankingViewModel.uiState.collectAsStateWithLifecycle()
     val entradaAtual by navController.currentBackStackEntryAsState()
     val rotaAtual = entradaAtual?.destination?.route
     val abaAtual = abaDaRota(rotaAtual)
@@ -157,7 +172,10 @@ fun NavegacaoApp(
                 RotaJogo(
                     jogo = jogo,
                     jogoViewModel = jogoViewModel,
-                    aoSalvarPartida = aoSalvarPartida,
+                    aoSalvarPartida = { partida ->
+                        rankingViewModel.salvar(partida)
+                        aoSalvarPartida(partida)
+                    },
                     aoIrParaRanking = { irParaAba(navController, ROTA_RANKING) }
                 )
             }
@@ -168,7 +186,19 @@ fun NavegacaoApp(
                 )
             }
             composable(ROTA_RANKING) {
-                RankingRota(onJogar = { irParaAba(navController, ROTA_JOGO) })
+                TelaRanking(
+                    partidas = ranking.partidasExibidas,
+                    filtro = ranking.filtro,
+                    onFiltroChange = rankingViewModel::definirFiltro,
+                    ordem = ranking.ordem,
+                    onOrdemChange = rankingViewModel::definirOrdem,
+                    onEditarNome = rankingViewModel::editarNome,
+                    onExcluir = rankingViewModel::excluir,
+                    onJogar = { irParaAba(navController, ROTA_JOGO) },
+                    carregando = ranking.carregando,
+                    erro = ranking.erro,
+                    onTentarDeNovo = rankingViewModel::carregar,
+                )
             }
             composable(ROTA_LOGIN) {
                 TelaLoginAdmin(
@@ -182,7 +212,11 @@ fun NavegacaoApp(
             }
             composable(ROTA_ADMIN) {
                 if (login.ehAdmin) {
+                    val painelViewModel: PainelAdminViewModel = viewModel(
+                        factory = PainelAdminViewModelFactory(FirestoreCartaRepository())
+                    )
                     PainelAdminRota(
+                        viewModel = painelViewModel,
                         onNovaCarta = { navController.navigate(rotaCarta(ID_CARTA_NOVA)) },
                         onEditarCarta = { id -> navController.navigate(rotaCarta(id)) },
                         onSair = {
@@ -200,9 +234,17 @@ fun NavegacaoApp(
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getString("id")
                 if (login.ehAdmin) {
+                    val entradaAdmin = remember(backStackEntry) {
+                        navController.getBackStackEntry(ROTA_ADMIN)
+                    }
+                    val painelViewModel: PainelAdminViewModel = viewModel(
+                        viewModelStoreOwner = entradaAdmin,
+                        factory = PainelAdminViewModelFactory(FirestoreCartaRepository())
+                    )
                     CadastroCartaRota(
                         cartaId = if (id == ID_CARTA_NOVA) null else id,
-                        onVoltar = { navController.popBackStack() }
+                        onVoltar = { navController.popBackStack() },
+                        viewModel = painelViewModel,
                     )
                 }
             }

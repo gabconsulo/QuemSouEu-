@@ -1,8 +1,8 @@
-package com.exemplo.quemsoueu.data
+package com.grupo.quemsoueu.data
 
-import com.exemplo.quemsoueu.model.Carta
-import com.exemplo.quemsoueu.model.Categoria
-import com.exemplo.quemsoueu.model.Dificuldade
+import com.grupo.quemsoueu.model.Carta
+import com.grupo.quemsoueu.model.Categoria
+import com.grupo.quemsoueu.model.Dificuldade
 
 /**
  * Lista inicial de cartas. Usada para popular o Firestore pela primeira vez

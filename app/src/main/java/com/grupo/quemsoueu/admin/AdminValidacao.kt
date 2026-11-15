@@ -1,8 +1,8 @@
-package com.exemplo.quemsoueu.admin
+package com.grupo.quemsoueu.admin
 
-import com.exemplo.quemsoueu.model.Carta
-import com.exemplo.quemsoueu.model.Categoria
-import com.exemplo.quemsoueu.model.Dificuldade
+import com.grupo.quemsoueu.model.Carta
+import com.grupo.quemsoueu.model.Categoria
+import com.grupo.quemsoueu.model.Dificuldade
 
 /** Dados digitados no formulário do Painel Admin (ainda não validados). */
 data class FormularioCarta(

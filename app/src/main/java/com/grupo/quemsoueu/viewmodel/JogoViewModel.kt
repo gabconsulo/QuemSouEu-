@@ -3,6 +3,7 @@ package com.grupo.quemsoueu.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.grupo.quemsoueu.jogo.PONTOS_INICIAIS
+import com.grupo.quemsoueu.jogo.LIMITE_PERGUNTAS_IA
 import com.grupo.quemsoueu.jogo.TEMPO_LIMITE_SEGUNDOS
 import com.grupo.quemsoueu.jogo.VIDAS_MAXIMAS
 import com.grupo.quemsoueu.jogo.converterCarta
@@ -11,10 +12,13 @@ import com.grupo.quemsoueu.jogo.pontosAposDica
 import com.grupo.quemsoueu.jogo.pontosFinais
 import com.grupo.quemsoueu.jogo.sortearCarta
 import com.grupo.quemsoueu.repository.CartaRepository
+import com.grupo.quemsoueu.repository.GeminiPerguntaRepository
 import com.grupo.quemsoueu.ui.modelos.AjustesUi
 import com.grupo.quemsoueu.ui.modelos.CartaUi
 import com.grupo.quemsoueu.ui.modelos.PartidaUi
+import com.grupo.quemsoueu.ui.modelos.PerguntaIaUi
 import com.grupo.quemsoueu.ui.modelos.ResultadoPartidaUi
+import com.grupo.quemsoueu.jogo.CUSTO_PERGUNTA
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,13 +28,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class JogoViewModel(
-    private val repository: CartaRepository
+    private val repository: CartaRepository,
+    private val geminiRepository: GeminiPerguntaRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(JogoUiState())
     val uiState: StateFlow<JogoUiState> = _uiState.asStateFlow()
 
     private var cronometro: Job? = null
+    private var requisicaoIa: Job? = null
 
     init {
         onCarregarCartas()
@@ -62,6 +68,7 @@ class JogoViewModel(
     }
 
     fun onIniciarPartida() {
+        requisicaoIa?.cancel()
         val state = _uiState.value
         val carta = sortearCarta(state.cartasDisponiveis, state.ajustes)
 
@@ -84,7 +91,10 @@ class JogoViewModel(
                 pontos = PONTOS_INICIAIS,
                 aviso = null,
                 segundosRestantes = TEMPO_LIMITE_SEGUNDOS,
-                resultado = null
+                resultado = null,
+                perguntasIa = emptyList(),
+                iaPensando = false,
+                erroIa = null,
             )
         }
 
@@ -150,9 +160,64 @@ class JogoViewModel(
         }
     }
 
+    fun onPerguntar(pergunta: String) {
+        val estado = _uiState.value
+        val carta = estado.carta ?: return
+        if (!estado.emAndamento || !estado.ajustesDaPartida.perguntasIa || estado.iaPensando) return
+        if (estado.perguntasIa.size >= LIMITE_PERGUNTAS_IA || pergunta.isBlank()) return
+        if (pergunta.length > LIMITE_CARACTERES_PERGUNTA) {
+            _uiState.update { it.copy(erroIa = "A pergunta deve ter no máximo 200 caracteres.") }
+            return
+        }
+
+        val numeroDaPartida = estado.partidaNumero
+        _uiState.update { it.copy(iaPensando = true, erroIa = null) }
+        requisicaoIa = viewModelScope.launch {
+            geminiRepository.perguntar(pergunta.trim(), carta)
+                .onSuccess { resposta ->
+                    _uiState.update { atual ->
+                        if (atual.partidaNumero != numeroDaPartida) {
+                            atual
+                        } else if (!atual.emAndamento) {
+                            atual.copy(iaPensando = false)
+                        } else {
+                            atual.copy(
+                                perguntasIa = atual.perguntasIa + PerguntaIaUi(pergunta.trim(), resposta),
+                                pontos = (atual.pontos - CUSTO_PERGUNTA).coerceAtLeast(0),
+                                iaPensando = false,
+                                erroIa = null,
+                            )
+                        }
+                    }
+                }
+                .onFailure { falha ->
+                    _uiState.update {
+                        if (it.partidaNumero == numeroDaPartida) {
+                            it.copy(
+                                iaPensando = false,
+                                erroIa = "Não foi possível consultar a IA. (${falha.localizedMessage ?: "erro desconhecido"})",
+                            )
+                        } else {
+                            it
+                        }
+                    }
+                }
+        }
+    }
+
     fun onLimparPartida() {
         cronometro?.cancel()
-        _uiState.update { it.copy(carta = null, resultado = null, aviso = null) }
+        requisicaoIa?.cancel()
+        _uiState.update {
+            it.copy(
+                carta = null,
+                resultado = null,
+                aviso = null,
+                perguntasIa = emptyList(),
+                iaPensando = false,
+                erroIa = null,
+            )
+        }
     }
 
     fun montarPartida(nomeJogador: String): PartidaUi? {
@@ -167,16 +232,18 @@ class JogoViewModel(
             categoria = carta.categoria,
             pontuacao = resultado.pontos,
             dicasUsadas = state.dicasReveladas,
-            perguntasIa = 0,
+            perguntasIa = state.perguntasIa.size,
             tempoSegundos = state.tempoGasto
         )
     }
 
     private fun encerrarPartida(venceu: Boolean, carta: CartaUi, pontos: Int) {
         cronometro?.cancel()
+        requisicaoIa?.cancel()
         _uiState.update {
             it.copy(
                 aviso = null,
+                iaPensando = false,
                 resultado = ResultadoPartidaUi(venceu, carta.nome, pontos)
             )
         }
@@ -193,5 +260,9 @@ class JogoViewModel(
                 encerrarPartida(false, carta, 0)
             }
         }
+    }
+
+    private companion object {
+        const val LIMITE_CARACTERES_PERGUNTA = 200
     }
 }
