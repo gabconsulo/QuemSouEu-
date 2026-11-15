@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema só da janela. As cores e fontes das telas ficam em ui/theme (Compose). -->
+    <style name="Theme.QuemSouEu" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/roxo_fundo</item>
+    </style>
+</resources>
