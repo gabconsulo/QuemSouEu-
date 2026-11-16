@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "760732141659",
+    "project_id": "quemsoueu-9dad1",
+    "storage_bucket": "quemsoueu-9dad1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:760732141659:android:877c52795029e8a01b577e",
+        "android_client_info": {
+          "package_name": "com.grupo.quemsoueu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZCHSJ_4zKBn5isJ5K4-DEFJmmmzCJQuQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
