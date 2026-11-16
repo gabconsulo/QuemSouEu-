@@ -21,21 +21,21 @@ tempo e data. `PartidaDao` oferece inserir, atualizar, excluir e observar por `F
 o `RankingViewModel` expõe erros em `RankingUiState`. O ranking filtra por categoria e
 ordena por pontos, tempo ou data; as partidas ficam no dispositivo.
 
-### Gemini
+### OpenAI
 
 O jogo envia perguntas de até 200 caracteres e limita cada partida a 10 perguntas.
-Gemini responde `SIM`, `NAO` ou `TALVEZ`; uma resposta válida custa 5 pontos. O cadastro
+OpenAI responde `SIM`, `NAO` ou `TALVEZ`; uma resposta válida custa 5 pontos. O cadastro
 de cartas também usa a API para sugerir cinco dicas, que podem ser revisadas antes de salvar.
-O modelo configurado é `gemini-3.8-flash`.
+O modelo configurado é `gpt-6-luna`.
 
 Configure a chave **fora do repositório**, usando uma propriedade Gradle:
 
 ```properties
-GEMINI_API_KEY=sua_chave
+OPENAI_API_KEY=sua_chave
 ```
 
 Salve essa linha em `%USERPROFILE%\.gradle\gradle.properties`, ou defina a variável de
-ambiente `GEMINI_API_KEY`. Sem chave, as telas mostram o erro de configuração ao usar a
+ambiente `OPENAI_API_KEY`. Sem chave, as telas mostram o erro de configuração ao usar a
 IA. A chave compilada em um app Android pode ser extraída do APK; use um backend para
 qualquer implantação pública.
 

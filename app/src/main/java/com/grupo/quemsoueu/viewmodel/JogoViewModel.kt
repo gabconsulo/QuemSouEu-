@@ -12,7 +12,7 @@ import com.grupo.quemsoueu.jogo.pontosAposDica
 import com.grupo.quemsoueu.jogo.pontosFinais
 import com.grupo.quemsoueu.jogo.sortearCarta
 import com.grupo.quemsoueu.repository.CartaRepository
-import com.grupo.quemsoueu.repository.GeminiPerguntaRepository
+import com.grupo.quemsoueu.repository.OpenAiPerguntaRepository
 import com.grupo.quemsoueu.ui.modelos.AjustesUi
 import com.grupo.quemsoueu.ui.modelos.CartaUi
 import com.grupo.quemsoueu.ui.modelos.PartidaUi
@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 
 class JogoViewModel(
     private val repository: CartaRepository,
-    private val geminiRepository: GeminiPerguntaRepository,
+    private val openAiRepository: OpenAiPerguntaRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(JogoUiState())
@@ -173,7 +173,7 @@ class JogoViewModel(
         val numeroDaPartida = estado.partidaNumero
         _uiState.update { it.copy(iaPensando = true, erroIa = null) }
         requisicaoIa = viewModelScope.launch {
-            geminiRepository.perguntar(pergunta.trim(), carta)
+            openAiRepository.perguntar(pergunta.trim(), carta)
                 .onSuccess { resposta ->
                     _uiState.update { atual ->
                         if (atual.partidaNumero != numeroDaPartida) {

@@ -11,7 +11,7 @@ import com.grupo.quemsoueu.model.Carta
 import com.grupo.quemsoueu.model.Categoria as CategoriaDados
 import com.grupo.quemsoueu.model.Dificuldade as DificuldadeDados
 import com.grupo.quemsoueu.repository.CartaRepository
-import com.grupo.quemsoueu.repository.GeminiPerguntaRepository
+import com.grupo.quemsoueu.repository.OpenAiPerguntaRepository
 import com.grupo.quemsoueu.ui.modelos.CartaUi
 import com.grupo.quemsoueu.ui.modelos.Categoria
 import com.grupo.quemsoueu.ui.modelos.Dificuldade
@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 
 class PainelAdminViewModel(
     private val repository: CartaRepository,
-    private val gemini: GeminiPerguntaRepository,
+    private val openAi: OpenAiPerguntaRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PainelAdminUiState())
     val uiState: StateFlow<PainelAdminUiState> = _uiState.asStateFlow()
@@ -116,7 +116,7 @@ class PainelAdminViewModel(
     fun gerarDicas(nome: String, categoria: Categoria, dificuldade: Dificuldade) {
         viewModelScope.launch {
             _uiState.update { it.copy(gerandoDicas = true, erro = null, dicasGeradas = null) }
-            gemini.gerarDicas(nome, categoria.nome, dificuldade.nome)
+            openAi.gerarDicas(nome, categoria.nome, dificuldade.nome)
                 .onSuccess { dicas ->
                     _uiState.update { it.copy(gerandoDicas = false, dicasGeradas = dicas) }
                 }
