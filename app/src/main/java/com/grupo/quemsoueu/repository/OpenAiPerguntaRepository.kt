@@ -9,16 +9,15 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
-import java.net.URLEncoder
 import java.text.Normalizer
 
-class GeminiPerguntaRepository(
+class OpenAiPerguntaRepository(
     private val apiKey: String,
 ) {
     suspend fun perguntar(pergunta: String, carta: CartaUi): Result<RespostaIa> =
         try {
             if (apiKey.isBlank()) {
-                error("Configure GEMINI_API_KEY para habilitar as perguntas à IA.")
+                error("Configure OPENAI_API_KEY para habilitar as perguntas à IA.")
             }
             val resposta = withContext(Dispatchers.IO) {
                 require(pergunta.length <= 200) { "A pergunta deve ter no máximo 200 caracteres." }
@@ -51,7 +50,7 @@ class GeminiPerguntaRepository(
     ): Result<List<String>> =
         try {
             if (apiKey.isBlank()) {
-                error("Configure GEMINI_API_KEY para habilitar a geração de dicas.")
+                error("Configure OPENAI_API_KEY para habilitar a geração de dicas.")
             }
             val dicas = withContext(Dispatchers.IO) {
                 val resposta = enviarPrompt(
@@ -84,51 +83,39 @@ class GeminiPerguntaRepository(
         maxTokens: Int,
         instrucaoSistema: String,
     ): String {
-        val url = URL("$ENDPOINT?key=${URLEncoder.encode(apiKey, Charsets.UTF_8.name())}")
+        val url = URL(ENDPOINT)
         val conexao = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = 15_000
             readTimeout = 20_000
             doOutput = true
             setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            setRequestProperty("Authorization", "Bearer $apiKey")
         }
 
         try {
             val corpo = JSONObject()
+                .put("model", MODEL)
                 .put(
-                    "contents",
-                    JSONArray().put(
-                        JSONObject().put(
-                            "parts",
-                            JSONArray().put(JSONObject().put("text", conteudo)),
-                        ),
-                    ),
+                    "messages",
+                    JSONArray()
+                        .put(JSONObject().put("role", "system").put("content", instrucaoSistema))
+                        .put(JSONObject().put("role", "user").put("content", conteudo)),
                 )
-                .put(
-                    "systemInstruction",
-                    JSONObject().put(
-                        "parts",
-                        JSONArray().put(JSONObject().put("text", instrucaoSistema)),
-                    ),
-                )
-                .put(
-                    "generationConfig",
-                    JSONObject().put("temperature", 0.0).put("maxOutputTokens", maxTokens),
-                )
+                .put("temperature", 0.0)
+                .put("max_tokens", maxTokens)
 
             conexao.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(corpo.toString()) }
             val status = conexao.responseCode
             val fluxo = if (status in 200..299) conexao.inputStream else conexao.errorStream
             val texto = fluxo?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
-            check(status in 200..299) { "Gemini retornou HTTP $status." }
+            check(status in 200..299) { "OpenAI retornou HTTP $status." }
 
             return JSONObject(texto)
-                .getJSONArray("candidates")
+                .getJSONArray("choices")
                 .getJSONObject(0)
-                .getJSONObject("content")
-                .getJSONArray("parts")
-                .getJSONObject(0)
-                .getString("text")
+                .getJSONObject("message")
+                .getString("content")
         } finally {
             conexao.disconnect()
         }
@@ -146,7 +133,7 @@ class GeminiPerguntaRepository(
     }
 
     companion object {
-        private const val ENDPOINT =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+        private const val ENDPOINT = "https://api.openai.com/v1/chat/completions"
+        private const val MODEL = "gpt-4o-mini"
     }
 }

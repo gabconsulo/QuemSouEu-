@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.grupo.quemsoueu.BuildConfig
 import com.grupo.quemsoueu.repository.CartaRepository
-import com.grupo.quemsoueu.repository.GeminiPerguntaRepository
+import com.grupo.quemsoueu.repository.OpenAiPerguntaRepository
 
 class PainelAdminViewModelFactory(
     private val cartaRepository: CartaRepository,
@@ -14,7 +14,7 @@ class PainelAdminViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return PainelAdminViewModel(
                 cartaRepository,
-                GeminiPerguntaRepository(BuildConfig.GEMINI_API_KEY),
+                OpenAiPerguntaRepository(BuildConfig.OPENAI_API_KEY),
             ) as T
         }
         throw IllegalArgumentException("ViewModel desconhecido: ${modelClass.name}")
