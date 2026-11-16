@@ -5,8 +5,8 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val openAiApiKey = providers.gradleProperty("OPENAI_API_KEY")
-    .orElse(providers.environmentVariable("OPENAI_API_KEY"))
+val geminiApiKey = providers.gradleProperty("GEMINI_API_KEY")
+    .orElse(providers.environmentVariable("GEMINI_API_KEY"))
     .getOrElse("")
 
 if (file("google-services.json").isFile) {
@@ -23,7 +23,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-        buildConfigField("String", "OPENAI_API_KEY", "\"$openAiApiKey\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     compileOptions {
