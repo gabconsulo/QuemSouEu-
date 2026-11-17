@@ -13,6 +13,8 @@ data class RankingUiState(
 ) {
     val partidasExibidas: List<PartidaUi>
         get() = partidas
+            .groupBy { it.nomeJogador.trim().lowercase() }
+            .map { (_, jogos) -> jogos.maxBy { it.pontuacao } }
             .filter { filtro == null || it.categoria == filtro }
             .let { lista ->
                 when (ordem) {

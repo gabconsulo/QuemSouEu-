@@ -12,6 +12,9 @@ interface PartidaDao {
     @Query("SELECT * FROM partidas ORDER BY criadaEm DESC")
     fun observarTodas(): Flow<List<PartidaEntity>>
 
+    @Query("SELECT * FROM partidas")
+    suspend fun listar(): List<PartidaEntity>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun inserir(partida: PartidaEntity): Long
 

@@ -7,6 +7,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 
 class FirestoreCartaRepository(
     private val obterDb: () -> FirebaseFirestore = { FirebaseFirestore.getInstance() },
@@ -34,7 +35,7 @@ class FirestoreCartaRepository(
 
     private suspend fun executar(operacao: suspend () -> Unit): Result<Unit> =
         try {
-            operacao()
+            withTimeoutOrNull(TEMPO_LIMITE_GRAVACAO_MS) { operacao() }
             Result.success(Unit)
         } catch (erro: CancellationException) {
             throw erro
@@ -66,5 +67,6 @@ class FirestoreCartaRepository(
 
     companion object {
         const val COLECAO_CARTAS = "cartas"
+        private const val TEMPO_LIMITE_GRAVACAO_MS = 5_000L
     }
 }

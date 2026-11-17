@@ -37,6 +37,7 @@ class JogoViewModel(
 
     private var cronometro: Job? = null
     private var requisicaoIa: Job? = null
+    private var ultimaCartaId: String? = null
 
     init {
         onCarregarCartas()
@@ -70,7 +71,7 @@ class JogoViewModel(
     fun onIniciarPartida() {
         requisicaoIa?.cancel()
         val state = _uiState.value
-        val carta = sortearCarta(state.cartasDisponiveis, state.ajustes)
+        val carta = sortearCarta(state.cartasDisponiveis, state.ajustes, ultimaCartaId)
 
         if (carta == null) {
             _uiState.update {
@@ -78,6 +79,8 @@ class JogoViewModel(
             }
             return
         }
+
+        ultimaCartaId = carta.id
 
         _uiState.update {
             it.copy(

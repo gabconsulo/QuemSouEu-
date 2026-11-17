@@ -44,5 +44,9 @@ fun filtrarCartas(cartas: List<CartaUi>, ajustes: AjustesUi): List<CartaUi> =
         .filter { it.categoria in ajustes.categorias }
         .filter { it.dificuldade == ajustes.dificuldade }
 
-fun sortearCarta(cartas: List<CartaUi>, ajustes: AjustesUi): CartaUi? =
-    filtrarCartas(cartas, ajustes).randomOrNull()
+fun sortearCarta(cartas: List<CartaUi>, ajustes: AjustesUi, ultimaCartaId: String? = null): CartaUi? {
+    val candidatas = filtrarCartas(cartas, ajustes)
+        .distinctBy { it.nome.trim().lowercase() }
+    val semRepetir = candidatas.filter { it.id != ultimaCartaId }
+    return semRepetir.ifEmpty { candidatas }.randomOrNull()
+}

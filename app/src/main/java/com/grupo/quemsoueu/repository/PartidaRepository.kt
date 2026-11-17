@@ -27,11 +27,18 @@ class RoomPartidaRepository(
             }
 
     override suspend fun inserir(partida: PartidaUi): Result<Unit> = executar {
-        dao.inserir(PartidaEntity.deUi(partida.copy(id = 0L)))
+        val existente = dao.listar().firstOrNull { mesmoNome(it.nomeJogador, partida.nomeJogador) }
+        if (existente == null) {
+            dao.inserir(PartidaEntity.deUi(partida.copy(id = 0L)))
+        } else if (partida.pontuacao > existente.pontuacao) {
+            dao.atualizar(PartidaEntity.deUi(partida.copy(id = existente.id)))
+        }
         Unit
     }
 
     override suspend fun atualizar(partida: PartidaUi): Result<Unit> = executar {
+        val nomeRepetido = dao.listar().any { it.id != partida.id && mesmoNome(it.nomeJogador, partida.nomeJogador) }
+        check(!nomeRepetido) { "Já existe um jogador com esse nome no ranking." }
         check(dao.atualizar(PartidaEntity.deUi(partida)) > 0) {
             "A partida não existe mais no ranking."
         }
@@ -40,6 +47,9 @@ class RoomPartidaRepository(
     override suspend fun excluir(id: Long): Result<Unit> = executar {
         check(dao.excluir(id) > 0) { "A partida não existe mais no ranking." }
     }
+
+    private fun mesmoNome(nomeA: String, nomeB: String): Boolean =
+        nomeA.trim().equals(nomeB.trim(), ignoreCase = true)
 
     private suspend fun executar(operacao: suspend () -> Unit): Result<Unit> =
         try {
