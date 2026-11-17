@@ -93,6 +93,7 @@ fun TelaJogo(
     onVirarDica: () -> Unit,
     onPerguntar: (String) -> Unit,
     onChutar: (String) -> Unit,
+    onSair: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var palpite by rememberSaveable { mutableStateOf("") }
@@ -192,6 +193,12 @@ fun TelaJogo(
                 estilo = EstiloBotao.VERDE,
             )
         }
+        BotaoCartoon(
+            texto = "Sair da partida",
+            onClick = onSair,
+            estilo = EstiloBotao.BRANCO,
+            modifier = Modifier.fillMaxWidth(),
+        )
         Spacer(Modifier.height(8.dp))
     }
 }
@@ -455,6 +462,7 @@ private fun TelaJogoPreview() {
             onVirarDica = {},
             onPerguntar = {},
             onChutar = {},
+            onSair = {},
         )
     }
 }

@@ -2,6 +2,7 @@ package com.grupo.quemsoueu.navegacao
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -25,6 +26,8 @@ import com.grupo.quemsoueu.repository.FirestoreCartaRepository
 import com.grupo.quemsoueu.data.local.RankingDatabase
 import com.grupo.quemsoueu.repository.RoomPartidaRepository
 import com.grupo.quemsoueu.ui.componentes.BarraJogador
+import com.grupo.quemsoueu.ui.componentes.BotaoCartoon
+import com.grupo.quemsoueu.ui.componentes.EstiloBotao
 import com.grupo.quemsoueu.ui.componentes.EstadoCarregando
 import com.grupo.quemsoueu.ui.componentes.EstadoErro
 import com.grupo.quemsoueu.ui.componentes.fundoJogo
@@ -59,10 +62,12 @@ fun RotaJogo(
     jogo: JogoUiState,
     jogoViewModel: JogoViewModel,
     aoSalvarPartida: (PartidaUi) -> Unit,
-    aoIrParaRanking: () -> Unit
+    aoIrParaRanking: () -> Unit,
+    aoVoltar: () -> Unit,
+    telaAtiva: Boolean
 ) {
-    LaunchedEffect(jogo.precisaIniciar) {
-        if (jogo.precisaIniciar) {
+    LaunchedEffect(jogo.precisaIniciar, telaAtiva) {
+        if (jogo.precisaIniciar && telaAtiva) {
             jogoViewModel.onIniciarPartida()
         }
     }
@@ -80,6 +85,12 @@ fun RotaJogo(
         ) {
             if (erro != null) {
                 EstadoErro(mensagem = erro, onTentarDeNovo = { jogoViewModel.onCarregarCartas() })
+                BotaoCartoon(
+                    texto = "Voltar",
+                    onClick = aoVoltar,
+                    estilo = EstiloBotao.BRANCO,
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                )
             } else {
                 EstadoCarregando()
             }
@@ -91,7 +102,11 @@ fun RotaJogo(
         estado = estadoTela,
         onVirarDica = { jogoViewModel.onVirarDica() },
         onPerguntar = { pergunta -> jogoViewModel.onPerguntar(pergunta) },
-        onChutar = { palpite -> jogoViewModel.onChutar(palpite) }
+        onChutar = { palpite -> jogoViewModel.onChutar(palpite) },
+        onSair = {
+            jogoViewModel.onLimparPartida()
+            aoVoltar()
+        }
     )
 
     if (resultado != null) {
@@ -176,7 +191,9 @@ fun NavegacaoApp(
                         rankingViewModel.salvar(partida)
                         aoSalvarPartida(partida)
                     },
-                    aoIrParaRanking = { irParaAba(navController, ROTA_RANKING) }
+                    aoIrParaRanking = { irParaAba(navController, ROTA_RANKING) },
+                    aoVoltar = { navController.popBackStack(ROTA_INICIO, false) },
+                    telaAtiva = rotaAtual == ROTA_JOGO
                 )
             }
             composable(ROTA_AJUSTES) {
